@@ -9,8 +9,9 @@
         :root {
             --primary-blue: #4CC9FE;
             --sunny-yellow: #FFF200;
-            --grass-green: #A2D5AB;
+            --grass-green: #4CAF50;
             --strawberry-pink: #FF87B2;
+            --record-red: #FF4E11;
         }
 
         body {
@@ -28,28 +29,26 @@
             width: 90%;
             max-width: 500px;
             border-radius: 40px;
-            box-shadow: 0 20px 0 #CBDCEB;
+            box-shadow: 0 15px 0 #CBDCEB;
             padding: 30px;
             text-align: center;
             border: 6px solid #333;
         }
 
-        h1 { color: #FF6B6B; font-size: 2.5rem; margin-top: 0; text-shadow: 2px 2px #FFD700; }
+        h1 { color: #FF6B6B; font-size: 2.2rem; margin-top: 0; text-shadow: 2px 2px #FFD700; }
 
-        /* 1. 聽老師唸區塊 */
+        /* 1. 老師唸 */
         .teacher-box {
             background: var(--primary-blue);
             border-radius: 25px;
             padding: 20px;
             cursor: pointer;
             margin-bottom: 25px;
-            transition: transform 0.2s;
             border-bottom: 8px solid #3895D3;
         }
-        .teacher-box:active { transform: translateY(4px); border-bottom-width: 4px; }
         .icon-large { font-size: 60px; }
 
-        /* 2. 選項區塊 */
+        /* 2. 選項 */
         .word-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -69,31 +68,68 @@
         }
         .word-card:nth-child(2) { background: #9B72AA; border-bottom-color: #6D4C7D; }
 
-        /* 4. 錄音視覺化 */
+        /* 錄音區塊與 Hear Me 大按鈕 */
         .record-zone {
-            display: none; /* 答對才顯示 */
-            background: #F1F1F1;
+            display: none;
+            background: #F9F9F9;
+            padding: 20px;
+            border-radius: 30px;
+            margin-top: 20px;
+            border: 3px dashed #CCC;
+        }
+        
+        .action-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-mic, .btn-play-me {
+            width: 100%;
             padding: 20px;
             border-radius: 25px;
-            margin-top: 20px;
-        }
-        .btn-mic {
-            background: #FF4E11;
-            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
             border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 1.2rem;
             cursor: pointer;
-            margin: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
+
+        .btn-mic { background: var(--record-red); border-bottom: 6px solid #B2360D; }
+        
+        /* Hear Me 按鈕：特別加大加亮 */
+        .btn-play-me { 
+            background: var(--grass-green); 
+            border-bottom: 6px solid #388E3C;
+            font-size: 1.8rem; /* 字體更大 */
+            display: none; /* 有錄音才出現 */
+        }
+
         .recording-now {
             animation: pulse-red 1s infinite;
+            background-color: #000 !important;
         }
+
         @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(255, 78, 17, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 78, 17, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 78, 17, 0); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .next-btn {
+            background: #555;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            width: 100%;
+            margin-top: 15px;
+            border: none;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -104,17 +140,19 @@
     
     <div class="teacher-box" onclick="speakWord()">
         <div class="icon-large">📢</div>
-        <p style="color:white; font-weight:bold;">Listen to Teacher!</p>
+        <p style="color:white; font-weight:bold; margin:5px 0 0 0;">Listen to Teacher</p>
     </div>
 
     <div class="word-grid" id="options"></div>
-    <div id="message" style="font-size: 1.5rem; font-weight: bold;"></div>
+    <div id="message" style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;"></div>
 
     <div class="record-zone" id="recordSection">
-        <p>Now, your turn to say it!</p>
-        <button class="btn-mic" id="micBtn">🎤 Start Recording</button>
-        <button id="playMe" style="display:none; padding:10px; border-radius:10px;">▶️ Hear Me</button>
-        <button onclick="nextLevel()" style="margin-top:20px; display:block; width:100%; padding:10px; border-radius:10px; background:#4CAF50; color:white; border:none;">Next Word ➡️</button>
+        <p style="font-weight: bold; color: #555;">Great! Now Record Your Voice:</p>
+        <div class="action-btns">
+            <button class="btn-mic" id="micBtn">🎤 Start Recording</button>
+            <button class="btn-play-me" id="playMe">👂 HEAR ME!</button>
+        </div>
+        <button class="next-btn" onclick="initGame()">Next Word ➡️</button>
     </div>
 </div>
 
@@ -122,7 +160,8 @@
     const wordBank = [
         {word: 'CAT', distract: 'CAN'}, {word: 'BED', distract: 'BAD'},
         {word: 'PIG', distract: 'PEG'}, {word: 'HOT', distract: 'HAT'},
-        {word: 'SUN', distract: 'RUN'}, {word: 'FOX', distract: 'BOX'}
+        {word: 'SUN', distract: 'RUN'}, {word: 'MAP', distract: 'MOP'},
+        {word: 'JET', distract: 'NET'}, {word: 'BOX', distract: 'FOX'}
     ];
 
     let currentItem;
@@ -132,12 +171,12 @@
     function initGame() {
         currentItem = wordBank[Math.floor(Math.random() * wordBank.length)];
         document.getElementById('recordSection').style.display = 'none';
+        document.getElementById('playMe').style.display = 'none';
         document.getElementById('message').innerText = "";
         const optionsDiv = document.getElementById('options');
         optionsDiv.innerHTML = "";
 
         let choices = [currentItem.word, currentItem.distract].sort(() => Math.random() - 0.5);
-        
         choices.forEach(w => {
             const btn = document.createElement('button');
             btn.className = 'word-card';
@@ -158,7 +197,7 @@
     function check(selected) {
         if(selected === currentItem.word) {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            document.getElementById('message').innerText = "🌟 EXCELLENT! 🌟";
+            document.getElementById('message').innerText = "🏆 YOU GOT IT!";
             document.getElementById('message').style.color = "#4CAF50";
             document.getElementById('recordSection').style.display = 'block';
         } else {
@@ -167,8 +206,9 @@
         }
     }
 
-    // 錄音功能邏輯
     const micBtn = document.getElementById('micBtn');
+    const playMeBtn = document.getElementById('playMe');
+
     micBtn.onclick = async () => {
         if (!mediaRecorder || mediaRecorder.state === 'inactive') {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -176,23 +216,23 @@
             mediaRecorder.start();
             audioChunks = [];
             micBtn.classList.add('recording-now');
-            micBtn.innerText = "🛑 Stop & Listen";
+            micBtn.innerText = "🛑 Recording... (Stop)";
+            playMeBtn.style.display = 'none';
         } else {
             mediaRecorder.stop();
             micBtn.classList.remove('recording-now');
-            micBtn.innerText = "🎤 Record Again";
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                document.getElementById('playMe').style.display = 'inline-block';
-                document.getElementById('playMe').onclick = () => audio.play();
-            };
+            micBtn.innerText = "🎤 Re-Record";
         }
+        
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            playMeBtn.style.display = 'flex';
+            playMeBtn.onclick = () => audio.play();
+        };
     };
-
-    function nextLevel() { initGame(); }
 
     window.onload = initGame;
 </script>
