@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonics Hero! 🌈</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #4CC9FE;
+            --sunny-yellow: #FFF200;
+            --grass-green: #A2D5AB;
+            --strawberry-pink: #FF87B2;
+        }
+
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+            background-color: #F0F9FF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .app-card {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 40px;
+            box-shadow: 0 20px 0 #CBDCEB;
+            padding: 30px;
+            text-align: center;
+            border: 6px solid #333;
+        }
+
+        h1 { color: #FF6B6B; font-size: 2.5rem; margin-top: 0; text-shadow: 2px 2px #FFD700; }
+
+        /* 1. 聽老師唸區塊 */
+        .teacher-box {
+            background: var(--primary-blue);
+            border-radius: 25px;
+            padding: 20px;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: transform 0.2s;
+            border-bottom: 8px solid #3895D3;
+        }
+        .teacher-box:active { transform: translateY(4px); border-bottom-width: 4px; }
+        .icon-large { font-size: 60px; }
+
+        /* 2. 選項區塊 */
+        .word-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .word-card {
+            background: var(--strawberry-pink);
+            color: white;
+            font-size: 32px;
+            padding: 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            border-bottom: 6px solid #D14D72;
+            font-weight: bold;
+        }
+        .word-card:nth-child(2) { background: #9B72AA; border-bottom-color: #6D4C7D; }
+
+        /* 4. 錄音視覺化 */
+        .record-zone {
+            display: none; /* 答對才顯示 */
+            background: #F1F1F1;
+            padding: 20px;
+            border-radius: 25px;
+            margin-top: 20px;
+        }
+        .btn-mic {
+            background: #FF4E11;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .recording-now {
+            animation: pulse-red 1s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 78, 17, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 78, 17, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 78, 17, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <h1>Phonics Hero</h1>
+    
+    <div class="teacher-box" onclick="speakWord()">
+        <div class="icon-large">📢</div>
+        <p style="color:white; font-weight:bold;">Listen to Teacher!</p>
+    </div>
+
+    <div class="word-grid" id="options"></div>
+    <div id="message" style="font-size: 1.5rem; font-weight: bold;"></div>
+
+    <div class="record-zone" id="recordSection">
+        <p>Now, your turn to say it!</p>
+        <button class="btn-mic" id="micBtn">🎤 Start Recording</button>
+        <button id="playMe" style="display:none; padding:10px; border-radius:10px;">▶️ Hear Me</button>
+        <button onclick="nextLevel()" style="margin-top:20px; display:block; width:100%; padding:10px; border-radius:10px; background:#4CAF50; color:white; border:none;">Next Word ➡️</button>
+    </div>
+</div>
+
+<script>
+    const wordBank = [
+        {word: 'CAT', distract: 'CAN'}, {word: 'BED', distract: 'BAD'},
+        {word: 'PIG', distract: 'PEG'}, {word: 'HOT', distract: 'HAT'},
+        {word: 'SUN', distract: 'RUN'}, {word: 'FOX', distract: 'BOX'}
+    ];
+
+    let currentItem;
+    let mediaRecorder;
+    let audioChunks = [];
+
+    function initGame() {
+        currentItem = wordBank[Math.floor(Math.random() * wordBank.length)];
+        document.getElementById('recordSection').style.display = 'none';
+        document.getElementById('message').innerText = "";
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = "";
+
+        let choices = [currentItem.word, currentItem.distract].sort(() => Math.random() - 0.5);
+        
+        choices.forEach(w => {
+            const btn = document.createElement('button');
+            btn.className = 'word-card';
+            btn.innerText = w;
+            btn.onclick = () => check(w);
+            optionsDiv.appendChild(btn);
+        });
+        speakWord();
+    }
+
+    function speakWord() {
+        const u = new SpeechSynthesisUtterance(currentItem.word);
+        u.lang = 'en-US';
+        u.rate = 0.7;
+        window.speechSynthesis.speak(u);
+    }
+
+    function check(selected) {
+        if(selected === currentItem.word) {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            document.getElementById('message').innerText = "🌟 EXCELLENT! 🌟";
+            document.getElementById('message').style.color = "#4CAF50";
+            document.getElementById('recordSection').style.display = 'block';
+        } else {
+            document.getElementById('message').innerText = "Try again! 💪";
+            document.getElementById('message').style.color = "#FF87B2";
+        }
+    }
+
+    // 錄音功能邏輯
+    const micBtn = document.getElementById('micBtn');
+    micBtn.onclick = async () => {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            audioChunks = [];
+            micBtn.classList.add('recording-now');
+            micBtn.innerText = "🛑 Stop & Listen";
+        } else {
+            mediaRecorder.stop();
+            micBtn.classList.remove('recording-now');
+            micBtn.innerText = "🎤 Record Again";
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                document.getElementById('playMe').style.display = 'inline-block';
+                document.getElementById('playMe').onclick = () => audio.play();
+            };
+        }
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    };
+
+    function nextLevel() { initGame(); }
+
+    window.onload = initGame;
+</script>
+</body>
+</html>
