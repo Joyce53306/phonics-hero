@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonics Hero - 字母發音優化版</title>
+    <title>Phonics Hero - 純字母名隨機版</title>
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3406/3406828.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +55,7 @@
         <button id="start-btn" onclick="startGame()">點我開始玩！</button>
     </div>
 
-    <div id="header" style="font-size:24px; font-weight:bold; color:#555;">找到正確的字母！</div>
+    <div id="header" style="font-size:24px; font-weight:bold; color:#555;">聽聲音，找出正確的字母！</div>
     <div class="star-container" id="star-display"></div>
 
     <div class="button-container">
@@ -71,19 +71,9 @@
     </div>
 
     <script>
+        // 26個標準英文字母
         const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         
-        // 核心修改：利用美式英語擬音字（Phonetic text），逼迫系統發出乾淨、短促的自然發音
-        const phonicsSounds = {
-            "A": "A... ah",      "B": "B... buh",     "C": "C... kuh",     "D": "D... duh", 
-            "E": "E... eh",      "F": "F... fuh",     "G": "G... guh",     "H": "H... huh", 
-            "I": "I... ih",      "J": "J... juh",     "K": "K... kuh",     "L": "L... luh", 
-            "M": "M... muh",     "N": "N... nuh",     "O": "O... ahh",     "P": "P... puh", 
-            "Q": "Q... kwuh",    "R": "R... ruh",     "S": "S... suh",     "T": "T... tuh", 
-            "U": "U... uh",      "V": "V... vuh",     "W": "W... wuh",     "X": "X... ks", 
-            "Y": "Y... juh",     "Z": "Z... zuh"
-        };
-
         let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
         let musicTimer = null;
         
@@ -107,6 +97,7 @@
             currentOptions = [shuffled[0], shuffled[1]];
             targetLetter = currentOptions[Math.floor(Math.random() * 2)];
             
+            // 隨機決定按鈕外觀 (0: 大寫, 1: 小寫, 2: 大小寫一起出現且中間有空格)
             const displayType = Math.floor(Math.random() * 3);
             let textLeft = "";
             let textRight = "";
@@ -129,12 +120,12 @@
             setTimeout(playTargetLetter, 500);
         }
 
+        // 修改點：回歸最純粹的只唸字母名稱（例如只傳入 "A"、"B"）
         function playTargetLetter() {
             window.speechSynthesis.cancel(); 
-            const soundText = phonicsSounds[targetLetter];
-            const u = new SpeechSynthesisUtterance(soundText);
+            const u = new SpeechSynthesisUtterance(targetLetter);
             u.lang = 'en-US'; 
-            u.rate = 0.5; // 調慢速度，讓字母名稱與後面的短音有清晰的停頓
+            u.rate = 0.6; // 語速稍微放慢，讓聲音聽起來清楚沉穩
             window.speechSynthesis.speak(u);
         }
 
@@ -149,7 +140,7 @@
                 document.getElementById(index === 0 ? 'btn-left' : 'btn-right').classList.add('correct-anim');
                 document.getElementById('next-btn').style.display = 'block';
             } else { 
-                alert("再聽一次喔！是字母 " + targetLetter); 
+                alert("再聽一次喔！"); 
                 playTargetLetter(); 
             }
         }
