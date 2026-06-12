@@ -71,7 +71,7 @@
     </div>
 
     <script>
-        // 26個標準英文字母
+        // 26個最純粹的英文字母
         const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         
         let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
@@ -120,12 +120,12 @@
             setTimeout(playTargetLetter, 500);
         }
 
-        // 修改點：回歸最純粹的只唸字母名稱（例如只傳入 "A"、"B"）
+        // 核心修改：完全只發送最乾淨的字母名音，排除任何拼字、擬音或單字
         function playTargetLetter() {
             window.speechSynthesis.cancel(); 
             const u = new SpeechSynthesisUtterance(targetLetter);
             u.lang = 'en-US'; 
-            u.rate = 0.6; // 語速稍微放慢，讓聲音聽起來清楚沉穩
+            u.rate = 0.6; // 稍微放慢語速，確保清晰度
             window.speechSynthesis.speak(u);
         }
 
