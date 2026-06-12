@@ -3,17 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonics Hero - 自然發音小超人</title>
+    <title>Phonics Hero - Comic Sans 大小寫版</title>
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3406/3406828.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --bg-color: #fdf0d5; --pink: #ffc2d1; --blue: #bde0fe; --green: #58cc02; }
-        body { font-family: sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        :root { --bg-color: #fffcf2; --pink: #ffc2d1; --blue: #bde0fe; --green: #58cc02; }
+        body { font-family: 'Comic Neue', 'Comic Sans MS', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        #start-btn { padding: 20px 50px; font-size: 30px; border-radius: 50px; background: #00a8e8; color: white; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        #start-btn { padding: 20px 50px; font-size: 30px; border-radius: 50px; background: #ffda08; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .star-container { font-size: 35px; height: 50px; margin: 10px 0; color: #ffcc00; text-shadow: 1px 1px #888; }
         .button-container { display: flex; justify-content: center; gap: 20px; width: 100%; margin: 20px 0; }
-        .word-btn { width: 140px; height: 140px; border-radius: 50%; border: 6px solid white; font-size: 32px; font-weight: bold; box-shadow: 0 8px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; color: #333; }
+        
+        /* 圓圈按鈕字型：強制優先使用正宗 Comic Neue / Comic Sans 字體 */
+        .word-btn { 
+            width: 140px; 
+            height: 140px; 
+            border-radius: 50%; 
+            border: 6px solid white; 
+            font-family: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif; 
+            font-size: 36px; /* 稍微放大字體，讓 Comic Sans 的可愛線條更明顯 */
+            font-weight: 700; 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #444; 
+            transition: 0.2s; 
+        }
+        
         .btn-pink { background-color: var(--pink); }
         .btn-blue { background-color: var(--blue); }
         .correct-anim { transform: scale(1.1); border-color: var(--green); border-width: 8px; }
@@ -29,11 +51,11 @@
 <body>
 
     <div id="start-overlay">
-        <h1 style="color: #003049; margin-bottom: 30px;">Phonics Hero!</h1>
+        <h1 style="margin-bottom: 30px;">Ready?</h1>
         <button id="start-btn" onclick="startGame()">點我開始玩！</button>
     </div>
 
-    <div id="header" style="font-size:24px; font-weight:bold; color:#003049;">聽聲音，找出正確的字母！</div>
+    <div id="header" style="font-size:24px; font-weight:bold; color:#555;">找到正確的字母！</div>
     <div class="star-container" id="star-display"></div>
 
     <div class="button-container">
@@ -42,18 +64,18 @@
     </div>
 
     <div id="controls">
-        <button class="action-btn" onclick="playTargetWord()">🔈 再聽一次老師唸</button>
+        <button class="action-btn" onclick="playTargetLetter()">🔈 再聽一次老師唸</button>
         <button id="record-btn" class="action-btn record-btn" onclick="toggleRecording()">🎤 錄音練習</button>
-        <button id="play-record-btn" class="action-btn play-btn" onclick="playRecording()" style="display:none;">▶️ 聽我的聲音</button>
-        <button id="next-btn" class="action-btn" onclick="initGame()">🌟 答對了！下一題</button>
+        <button id="play-record-btn" class="action-btn play-btn" style="display:none;" onclick="playRecording()">▶️ 聽我的聲音</button>
+        <button id="next-btn" class="action-btn" onclick="handleNextStep()">🌟 答對了！下一題</button>
     </div>
 
     <script>
-        // Phonics 字母清單 (可以依需求增加)
-        const wordList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
-        let targetWord = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
+        const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         
-        // 載入 Final Fantasy 勝利音效
+        let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
+        let musicTimer = null;
+        
         const victoryAudio = new Audio('https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3');
 
         function startGame() { 
@@ -70,53 +92,66 @@
             document.getElementById('record-btn').innerText = "🎤 錄音練習";
             document.querySelectorAll('.word-btn').forEach(b => b.classList.remove('correct-anim'));
             
-            const shuffled = [...wordList].sort(() => 0.5 - Math.random());
+            const shuffled = [...alphabet].sort(() => 0.5 - Math.random());
             currentOptions = [shuffled[0], shuffled[1]];
-            targetWord = currentOptions[Math.floor(Math.random() * 2)];
+            targetLetter = currentOptions[Math.floor(Math.random() * 2)];
             
-            document.getElementById('btn-left').innerText = currentOptions[0];
-            document.getElementById('btn-right').innerText = currentOptions[1];
+            // 圓圈內同時呈現大寫＋小寫 (例如: Aa, Bb)
+            document.getElementById('btn-left').innerText = currentOptions[0] + currentOptions[0].toLowerCase();
+            document.getElementById('btn-right').innerText = currentOptions[1] + currentOptions[1].toLowerCase();
             
             updateStars();
-            setTimeout(playTargetWord, 500);
+            setTimeout(playTargetLetter, 500);
         }
 
-        function playTargetWord() {
+        function playTargetLetter() {
             window.speechSynthesis.cancel(); 
-            const u = new SpeechSynthesisUtterance(targetWord);
-            u.lang = 'en-US'; u.rate = 0.6; // 放慢速度讓 Phonics 更清晰
+            const u = new SpeechSynthesisUtterance(targetLetter);
+            u.lang = 'en-US'; u.rate = 0.6; 
             window.speechSynthesis.speak(u);
         }
 
         function checkAnswer(index) {
             if (!canClick) return;
-            if (currentOptions[index] === targetWord) {
+            if (currentOptions[index] === targetLetter) {
                 canClick = false;
                 stars++;
                 updateStars();
                 
-                if (stars >= 5) {
-                    confetti({ particleCount: 400, spread: 120, origin: { y: 0.5 } });
-                    victoryAudio.currentTime = 0;
-                    victoryAudio.play();
-                    setTimeout(() => {
-                        alert("🏆 恭喜！Phonics 小英雄集滿五顆星！");
-                        stars = 0;
-                        initGame();
-                    }, 100);
-                } else {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-                    document.getElementById(index === 0 ? 'btn-left' : 'btn-right').classList.add('correct-anim');
-                    document.getElementById('next-btn').style.display = 'block';
-                }
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                document.getElementById(index === 0 ? 'btn-left' : 'btn-right').classList.add('correct-anim');
+                document.getElementById('next-btn').style.display = 'block';
             } else { 
-                alert("再聽一次喔！是字母 " + targetWord); 
-                playTargetWord(); 
+                alert("再聽一次喔！是字母 " + targetLetter); 
+                playTargetLetter(); 
+            }
+        }
+
+        function handleNextStep() {
+            if (stars >= 5) {
+                confetti({ particleCount: 400, spread: 120, origin: { y: 0.5 } });
+                
+                victoryAudio.currentTime = 0;
+                victoryAudio.play();
+                
+                if (musicTimer) clearTimeout(musicTimer);
+                musicTimer = setTimeout(() => {
+                    victoryAudio.pause();
+                    victoryAudio.currentTime = 0;
+                }, 3500); 
+
+                setTimeout(() => {
+                    alert("🎉 🏆 太棒了！自然發音小英雄集滿五顆星！");
+                    stars = 0;
+                    initGame();
+                }, 100);
+            } else {
+                initGame();
             }
         }
 
         function updateStars() { 
-            document.getElementById('star-display').innerText = stars === 0 ? "Ready!" : "⭐".repeat(stars); 
+            document.getElementById('star-display').innerText = stars === 0 ? "加油！" : "⭐".repeat(Math.min(stars, 5)); 
         }
 
         async function toggleRecording() {
@@ -139,7 +174,7 @@
                     mediaRecorder.start();
                     btn.classList.add('recording');
                     btn.innerText = "正在錄音...";
-                } catch (err) { alert("請開啟麥克風權限"); }
+                } catch (err) { alert("請開啟麥克風權限才能錄音喔！"); }
             }
         }
 
