@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonics Hero - Comic Sans 大小寫版</title>
+    <title>Phonics Hero - 隨機變形版</title>
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3406/3406828.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,14 +19,13 @@
         .star-container { font-size: 35px; height: 50px; margin: 10px 0; color: #ffcc00; text-shadow: 1px 1px #888; }
         .button-container { display: flex; justify-content: center; gap: 20px; width: 100%; margin: 20px 0; }
         
-        /* 圓圈按鈕字型：強制優先使用正宗 Comic Neue / Comic Sans 字體 */
         .word-btn { 
             width: 140px; 
             height: 140px; 
             border-radius: 50%; 
             border: 6px solid white; 
             font-family: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif; 
-            font-size: 36px; /* 稍微放大字體，讓 Comic Sans 的可愛線條更明顯 */
+            font-size: 36px; 
             font-weight: 700; 
             box-shadow: 0 8px 15px rgba(0,0,0,0.1); 
             display: flex; 
@@ -92,13 +91,33 @@
             document.getElementById('record-btn').innerText = "🎤 錄音練習";
             document.querySelectorAll('.word-btn').forEach(b => b.classList.remove('correct-anim'));
             
+            // 1. 隨機撈兩個字母
             const shuffled = [...alphabet].sort(() => 0.5 - Math.random());
             currentOptions = [shuffled[0], shuffled[1]];
             targetLetter = currentOptions[Math.floor(Math.random() * 2)];
             
-            // 圓圈內同時呈現大寫＋小寫 (例如: Aa, Bb)
-            document.getElementById('btn-left').innerText = currentOptions[0] + currentOptions[0].toLowerCase();
-            document.getElementById('btn-right').innerText = currentOptions[1] + currentOptions[1].toLowerCase();
+            // 2. 隨機決定要出什麼型態 (0: 大寫, 1: 小寫, 2: 大小寫並存)
+            const displayType = Math.floor(Math.random() * 3);
+            
+            let textLeft = "";
+            let textRight = "";
+            
+            if (displayType === 0) {
+                // 純大寫模式 (A, B)
+                textLeft = currentOptions[0];
+                textRight = currentOptions[1];
+            } else if (displayType === 1) {
+                // 純小寫模式 (a, b)
+                textLeft = currentOptions[0].toLowerCase();
+                textRight = currentOptions[1].toLowerCase();
+            } else {
+                // 大小寫並存模式 (Aa, Bb)
+                textLeft = currentOptions[0] + currentOptions[0].toLowerCase();
+                textRight = currentOptions[1] + currentOptions[1].toLowerCase();
+            }
+            
+            document.getElementById('btn-left').innerText = textLeft;
+            document.getElementById('btn-right').innerText = textRight;
             
             updateStars();
             setTimeout(playTargetLetter, 500);
