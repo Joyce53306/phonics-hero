@@ -1,9 +1,27 @@
+我懂了，Joyce 老師！這是因為手機和電腦內建的語音合成系統（TTS）如果直接用文字強行去拼發音符號（像 /æ/ 或是 as in），它會用朗讀句子的語氣把整串字機械式地唸出來，聽起來就會非常生硬而且奇怪，完全不適合給 2-6 歲的孩子當作 Phonics 範本。
+
+要讓內建發音發出最自然、最乾淨的 「字母名稱 + 字母音（Letter Name + Letter Sound）」，最完美的絕招是利用「擬音字」來欺騙發音引擎！
+
+我重新調校了 26 個字母的發音對照表，用英文母語者最常用的「擬聲拼字（Phonetic Spelling）」來重寫。例如：
+
+A 的發音改用 A, ah（發出乾淨的 /æ/ 吔）
+
+B 的發音改用 B, buh（發出乾淨的 /b/ 補）
+
+C 的發音改用 C, kuh（發出乾淨的 /k/ 刻）
+
+這樣一來，發音引擎就不會唸出多餘的雜音，而是會發出最標準、最像真人在教學的 "A... /æ/"、"B... /b/"！
+
+Phonics Hero「擬真自然發音優化版」
+請複製以下整段全新調校的代碼，直接全選覆蓋 GitHub 的 phonics-hero 倉庫中的 index.html：
+
+HTML
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonics Hero - 字母發音雙擊版</title>
+    <title>Phonics Hero - 字母發音優化版</title>
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3406/3406828.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,15 +91,15 @@
     <script>
         const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         
-        // 專為幼兒打造的自然發音對照表（用文字引導合成音發出精準的短音）
+        // 核心修改：利用美式英語擬音字（Phonetic text），逼迫系統發出乾淨、短促的自然發音
         const phonicsSounds = {
-            "A": "A, /æ/ as in apple", "B": "B, /b/", "C": "C, /k/", "D": "D, /d/", 
-            "E": "E, /ɛ/ as in egg", "F": "F, /f/", "G": "G, /g/", "H": "H, /h/", 
-            "I": "I, /ɪ/ as in igloo", "J": "J, /dʒ/", "K": "K, /k/", "L": "L, /l/", 
-            "M": "M, /m/", "N": "N, /n/", "O": "O, /ɒ/ as in ox", "P": "P, /p/", 
-            "Q": "Q, /kw/", "R": "R, /r/", "S": "S, /s/", "T": "T, /t/", 
-            "U": "U, /ʌ/ as in up", "V": "V, /v/", "W": "W, /w/", "X": "X, /ks/", 
-            "Y": "Y, /j/", "Z": "Z, /z/"
+            "A": "A... ah",      "B": "B... buh",     "C": "C... kuh",     "D": "D... duh", 
+            "E": "E... eh",      "F": "F... fuh",     "G": "G... guh",     "H": "H... huh", 
+            "I": "I... ih",      "J": "J... juh",     "K": "K... kuh",     "L": "L... luh", 
+            "M": "M... muh",     "N": "N... nuh",     "O": "O... ahh",     "P": "P... puh", 
+            "Q": "Q... kwuh",    "R": "R... ruh",     "S": "S... suh",     "T": "T... tuh", 
+            "U": "U... uh",      "V": "V... vuh",     "W": "W... wuh",     "X": "X... ks", 
+            "Y": "Y... juh",     "Z": "Z... zuh"
         };
 
         let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
@@ -129,14 +147,12 @@
             setTimeout(playTargetLetter, 500);
         }
 
-        // 修改點：播放字母名稱＋自然發音
         function playTargetLetter() {
             window.speechSynthesis.cancel(); 
-            // 抓取對照表裡帶有發音引導的字串
             const soundText = phonicsSounds[targetLetter];
             const u = new SpeechSynthesisUtterance(soundText);
             u.lang = 'en-US'; 
-            u.rate = 0.55; // 速度再放慢一點點，讓孩子聽得更清楚
+            u.rate = 0.5; // 調慢速度，讓字母名稱與後面的短音有清晰的停頓
             window.speechSynthesis.speak(u);
         }
 
