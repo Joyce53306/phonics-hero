@@ -13,9 +13,9 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --bg-color: #fffcf2; --pink: #ffc2d1; --blue: #bde0fe; --green: #58cc02; }
-        body { font-family: 'Comic Neue', 'Comic Sans MS', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        body { font-family: 'Comic Neue', 'Comic Sans MS', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        #start-btn { padding: 20px 50px; font-size: 30px; border-radius: 50px; background: #ffda08; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        #start-btn { padding: 20px 50px; font-size: 30px; border-radius: 50px; background: #ffda08; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); -webkit-appearance: none; }
         .star-container { font-size: 35px; height: 50px; margin: 10px 0; color: #ffcc00; text-shadow: 1px 1px #888; }
         .button-container { display: flex; justify-content: center; gap: 20px; width: 100%; margin: 20px 0; }
         
@@ -34,13 +34,14 @@
             color: #444; 
             transition: 0.2s; 
             letter-spacing: 2px; 
+            -webkit-appearance: none;
         }
         
         .btn-pink { background-color: var(--pink); }
         .btn-blue { background-color: var(--blue); }
         .correct-anim { transform: scale(1.1); border-color: var(--green); border-width: 8px; }
         #controls { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
-        .action-btn { padding: 15px 30px; border-radius: 50px; border: 2px solid #ddd; background-color: #fff; font-size: 18px; font-weight: bold; width: 85%; max-width: 320px; cursor: pointer; }
+        .action-btn { padding: 15px 30px; border-radius: 50px; border: 2px solid #ddd; background-color: #fff; font-size: 18px; font-weight: bold; width: 85%; max-width: 320px; cursor: pointer; -webkit-appearance: none; }
         .record-btn { background-color: #ffd6a5; }
         .recording { background-color: #ff6b6b !important; color: white; animation: pulse 1s infinite; }
         .play-btn { background-color: #c1fba4; }
@@ -71,18 +72,29 @@
     </div>
 
     <script>
-        // 26個最純粹的英文字母
         const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         
-        let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder, audioChunks = [], canClick = true;
-        let musicTimer = null;
+        let targetLetter = "", currentOptions = [], stars = 0, mediaRecorder = null, audioChunks = [], canClick = true;
+        let musicTimer = null, audioUrl = null, localStream = null;
         
         const victoryAudio = new Audio('https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3');
 
-        function startGame() { 
+        // 🌟 優化：在起跑點點擊時，直接解鎖音訊環境與請求麥克風
+        async function startGame() { 
             document.getElementById('start-overlay').style.display = 'none'; 
+            
+            // 解鎖播放器
             victoryAudio.volume = 0;
             victoryAudio.play().then(() => { victoryAudio.pause(); victoryAudio.volume = 1; }).catch(() => {});
+            
+            // 預先取得麥克風串流，避免 iOS 重複跳權限導致失效
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                initMediaRecorder(localStream);
+            } catch (err) {
+                console.log("Mic access delayed or denied");
+            }
+            
             initGame(); 
         }
 
@@ -97,7 +109,6 @@
             currentOptions = [shuffled[0], shuffled[1]];
             targetLetter = currentOptions[Math.floor(Math.random() * 2)];
             
-            // 隨機決定按鈕外觀 (0: 大寫, 1: 小寫, 2: 大小寫一起出現且中間有空格)
             const displayType = Math.floor(Math.random() * 3);
             let textLeft = "";
             let textRight = "";
@@ -120,12 +131,11 @@
             setTimeout(playTargetLetter, 500);
         }
 
-        // 核心修改：完全只發送最乾淨的字母名音，排除任何拼字、擬音或單字
         function playTargetLetter() {
             window.speechSynthesis.cancel(); 
             const u = new SpeechSynthesisUtterance(targetLetter);
             u.lang = 'en-US'; 
-            u.rate = 0.6; // 稍微放慢語速，確保清晰度
+            u.rate = 0.6; 
             window.speechSynthesis.speak(u);
         }
 
@@ -172,31 +182,60 @@
             document.getElementById('star-display').innerText = stars === 0 ? "加油！" : "⭐".repeat(Math.min(stars, 5)); 
         }
 
+        // 🌟 優化：跨平台錄音配置初始化
+        function initMediaRecorder(stream) {
+            let options = { mimeType: 'audio/webm' };
+            // 如果是 iOS Safari 不支援 webm，自動切換至 mp4
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'audio/mp4' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options = {}; // 讓系統走預設編碼
+                }
+            }
+            
+            mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                audioUrl = URL.createObjectURL(blob);
+                document.getElementById('play-record-btn').style.display = 'block';
+            };
+        }
+
+        // 🌟 優化：控制錄音啟動與停止
         async function toggleRecording() {
             const btn = document.getElementById('record-btn');
-            if (mediaRecorder && mediaRecorder.state === "recording") {
+            
+            // 安全機制：若沒在第一步拿到串流，此處重新補抓
+            if (!mediaRecorder) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    initMediaRecorder(localStream);
+                } catch (err) {
+                    alert("請開啟麥克風權限才能錄音喔！");
+                    return;
+                }
+            }
+
+            if (mediaRecorder.state === "recording") {
                 mediaRecorder.stop();
                 btn.classList.remove('recording');
                 btn.innerText = "✅ 錄好了";
             } else {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(audioChunks, { type: 'audio/wav' });
-                        window.recordedAudio = new Audio(URL.createObjectURL(blob));
-                        document.getElementById('play-record-btn').style.display = 'block';
-                    };
-                    mediaRecorder.start();
-                    btn.classList.add('recording');
-                    btn.innerText = "正在錄音...";
-                } catch (err) { alert("請開啟麥克風權限才能錄音喔！"); }
+                audioChunks = [];
+                mediaRecorder.start();
+                btn.classList.add('recording');
+                btn.innerText = "正在錄音...";
             }
         }
 
-        function playRecording() { if (window.recordedAudio) window.recordedAudio.play(); }
+        // 🌟 優化：修正 iOS 回放音訊路徑
+        function playRecording() { 
+            if (audioUrl) { 
+                const player = new Audio(audioUrl);
+                player.play().catch(e => console.log("Playback error:", e));
+            } 
+        }
     </script>
 </body>
 </html>
